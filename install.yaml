@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fixit
+  labels:
+    helloworld-accessibility: deployment
+  annotations:
+    description: Defines how to deploy fixit
+spec:
+  selector:
+    matchLabels:
+      app: fixit
+  replicas: 2 # tells deployment to run 2 pods matching the template
+  template:
+    metadata:
+      name: fixit
+      labels:
+        app: fixit
+    spec:
+      containers:
+        - name: fixit
+          image: simplefix:1.1
+          ports:
+            - containerPort: 8080
+              name: "running-port"
+          env:
+            - name: JAVA_OPTIONS
+              value: "-Dlog4j2.formatMsgNoLookups=true"
+            - name: ENV
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+          securityContext:
+            runAsUser: 999
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: fixit
+  annotations:
+    description: Exposes fixit
+spec:
+  type: NodePort
+  selector:
+    app: fixit
+  ports:
+    - port: 8080
+      nodePort: 31100
+      targetPort: 8080
+      protocol: TCP
